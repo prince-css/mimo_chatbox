@@ -1,12 +1,22 @@
-import React from "react";
-import logo from "./logo.svg";
-import "./App.css";
-
-function App() {
+import React, { useState } from "react";
+import ChatBox from "./component/chatBox";
+import WelcomeScreen from "./component/welcomeScreen";
+import { Route, Switch } from "react-router-dom";
+import { UserContext } from "./context/userContext";
+function App(props) {
+	const [user, setUser] = useState();
+	const userHandler = (userObj) => {
+		setUser(userObj);
+		console.log("user set korchi !!!");
+	};
 	return (
-		<div className="App">
-			<h1>Hello There !!!</h1>
-		</div>
+		<UserContext.Provider value={{ user: user, userHandler: userHandler }}>
+			<Switch>
+				<Route path="/chatbox" component={ChatBox} />
+				<Route path="/" component={WelcomeScreen} />
+			</Switch>
+		</UserContext.Provider>
+		//<ChatBox/>
 	);
 }
 
