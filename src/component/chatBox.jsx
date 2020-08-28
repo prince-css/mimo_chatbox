@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
+import "emoji-mart/css/emoji-mart.css";
+import { Picker } from "emoji-mart";
 import io from "socket.io-client";
 import Box from "@material-ui/core/Box";
 import { makeStyles, StylesProvider } from "@material-ui/core/styles";
 import SendIcon from "@material-ui/icons/Send";
+import SentimentSatisfiedOutlinedIcon from "@material-ui/icons/SentimentSatisfiedOutlined";
 import {
 	Button,
 	Card,
@@ -12,12 +15,14 @@ import {
 	Icon,
 	Chip,
 	Avatar,
+	Grid,
 } from "@material-ui/core";
 import styles from "../css/chatBox.module.css";
 import { deepPurple, orange, pink } from "@material-ui/core/colors";
 import Axios from "axios";
 import { getMsgs } from "../services/msgService";
 import { UserContext } from "../context/userContext";
+import { emojiConverter } from "react-easy-emoji";
 const socket = io("http://localhost:4000");
 
 let messages = [
@@ -34,8 +39,10 @@ function ChatBox(props) {
 	const [msgs, setMsgs] = useState(messages);
 	const [myMsg, setMyMsg] = useState();
 	const [bool, setBool] = useState(false);
+	const [showPicker, setShowPicker] = useState(false);
 	const fetchedData = useContext(UserContext);
 	const scrollRef = useRef();
+	const inputRef = useRef();
 	socket.on("connection", () => {
 		console.log("frontend is connected");
 	});
@@ -77,6 +84,9 @@ function ChatBox(props) {
 		//return () => socket.disconnect();
 	}, []);
 	const useStyles = makeStyles((theme) => ({
+		margin: {
+			margin: theme.spacing(1),
+		},
 		button: {
 			margin: theme.spacing(1),
 		},
@@ -105,6 +115,7 @@ function ChatBox(props) {
 		};
 		const allMsgs = [msgObj, ...messages];
 		setMsgs(allMsgs);
+		setShowPicker(false);
 		messages.unshift(msgObj);
 		socket.emit("chat", msgObj);
 		scrollRef.current.scrollTop =
@@ -114,7 +125,7 @@ function ChatBox(props) {
 
 	const renderMessages = () => {
 		let allmsg = [];
-		console.log(msgs);
+		//console.log(msgs);
 		msgs.map((msg) => {
 			//console.log(typeof msg.time);
 			allmsg.push(
@@ -151,6 +162,14 @@ function ChatBox(props) {
 		});
 		return allmsg;
 	};
+	const emojiHandler = (emoji) => {
+		console.log(emoji);
+		inputRef.current.value += emoji.native;
+		setMyMsg(inputRef.current.value);
+	};
+	const pickerHandler = (e) => {
+		setShowPicker(!showPicker);
+	};
 	return (
 		<div className={styles.boxContainer}>
 			<Box className={styles.box}>
@@ -169,11 +188,21 @@ function ChatBox(props) {
 						onSubmit={(e) => submitHandler(e)}
 					>
 						<TextField
-							fullWidth={true}
 							id="outlined-basic1"
+							multiline={true}
 							label="Post a message"
-							variant="outlined"
+							onClick={() =>
+								showPicker ? setShowPicker(false) : void 0
+							}
 							onChange={(e) => changeHandler(e)}
+							inputRef={inputRef}
+							className={styles.inputBox}
+						/>
+						<SentimentSatisfiedOutlinedIcon
+							fontSize="large"
+							color="disabled"
+							className={styles.emojiLogo}
+							onClick={(e) => pickerHandler(e)}
 						/>
 						<Button
 							type="submit"
@@ -185,6 +214,18 @@ function ChatBox(props) {
 							Send
 						</Button>
 					</form>
+					<Picker
+						title="Pick your emoji…"
+						onSelect={(e) => emojiHandler(e)}
+						showSkinTones={false}
+						showPreview={false}
+						sheetSize="64"
+						set="facebook"
+						style={{
+							position: "relative",
+							display: showPicker ? "block" : "none",
+						}}
+					/>
 				</Paper>
 			</Box>
 		</div>
