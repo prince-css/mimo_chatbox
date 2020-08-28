@@ -37,8 +37,8 @@ function WelcomeScreen(props) {
 			fetchedData.userHandler(userObj);
 			props.history.replace("/chatbox");
 		} catch (error) {
-			setError(error.response.data);
-			console.log(error.response.data);
+			console.log(error);
+			//setError(error.response.data);
 		}
 	};
 	return (

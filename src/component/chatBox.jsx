@@ -39,16 +39,7 @@ function ChatBox(props) {
 	socket.on("connection", () => {
 		console.log("frontend is connected");
 	});
-	socket.on("chat", (data) => {
-		console.log("received data", data);
-		const allMsgs = [...msgs, data];
-		setMsgs(allMsgs);
-		if (bool) {
-			//console.log(scrollRef.current);
-			scrollRef.current.scrollTop =
-				scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
-		}
-	});
+
 	socket.on("disconnect", () => {
 		console.log("frontend is disconnected");
 	});
@@ -58,6 +49,7 @@ function ChatBox(props) {
 		console.log("achi !!!");
 		//console.log(mss);
 		setMsgs(mss);
+		messages = mss;
 		scrollRef.current.scrollTop =
 			scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
 	};
@@ -68,7 +60,21 @@ function ChatBox(props) {
 		scrollRef.current.scrollTop =
 			scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
 		//console.log(scrollRef.current.scrollTop);
+
+		socket.on("chat", (data) => {
+			//console.log("received data", data);
+			//console.log(msgs);
+			const allMsgs = [data, ...messages];
+			messages.unshift(data);
+			setMsgs(allMsgs);
+			//console.log(msgs);
+
+			//console.log(scrollRef.current);
+			scrollRef.current.scrollTop =
+				scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
+		});
 		!bool && setBool(true);
+		//return () => socket.disconnect();
 	}, []);
 	const useStyles = makeStyles((theme) => ({
 		button: {
@@ -97,8 +103,9 @@ function ChatBox(props) {
 			time: new Date().toISOString(),
 			message: myMsg,
 		};
-		const allMsgs = [...msgs, msgObj];
+		const allMsgs = [msgObj, ...messages];
 		setMsgs(allMsgs);
+		messages.unshift(msgObj);
 		socket.emit("chat", msgObj);
 		scrollRef.current.scrollTop =
 			scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
@@ -107,7 +114,7 @@ function ChatBox(props) {
 
 	const renderMessages = () => {
 		let allmsg = [];
-		//console.log(msgs);
+		console.log(msgs);
 		msgs.map((msg) => {
 			//console.log(typeof msg.time);
 			allmsg.push(
