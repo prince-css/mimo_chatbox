@@ -40,9 +40,15 @@ function ChatBox(props) {
 	const [myMsg, setMyMsg] = useState();
 	const [bool, setBool] = useState(false);
 	const [showPicker, setShowPicker] = useState(false);
+	const [remoteUsers, setRemoteUsers] = useState([]);
 	const fetchedData = useContext(UserContext);
 	const scrollRef = useRef();
+	const peer1Ref = useRef();
+	const peer2Ref = useRef();
 	const inputRef = useRef();
+	const mediaRef = useRef();
+	const displayRef = useRef();
+
 	socket.on("connection", () => {
 		console.log("frontend is connected");
 	});
@@ -50,7 +56,25 @@ function ChatBox(props) {
 	socket.on("disconnect", () => {
 		console.log("frontend is disconnected");
 	});
-
+	const openMediaDevices = async () => {
+		let stream = await navigator.mediaDevices.getUserMedia({
+			video: true,
+			audio: true,
+		});
+		console.log("Got mediastream : ", stream);
+		console.log(mediaRef.current);
+		mediaRef.current.srcObject = stream;
+		return stream;
+	};
+	const openDisplay = async () => {
+		let stream = await navigator.mediaDevices.getDisplayMedia({
+			video: { cursor: "always", displaySurface: "monitor" },
+		});
+		console.log("Got mediastream : ", stream);
+		console.log(displayRef.current);
+		displayRef.current.srcObject = stream;
+		return;
+	};
 	const loadAllMsgs = async () => {
 		const mss = await getMsgs();
 		console.log("achi !!!");
@@ -60,7 +84,51 @@ function ChatBox(props) {
 		scrollRef.current.scrollTop =
 			scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
 	};
+	const createPeer = (source) => {
+		console.log(source);
+		const configuration = {
+			iceServers: [
+				{
+					urls: "stun:stun.stunprotocol.org",
+				},
+				{
+					urls: "turn:numb.viagenie.ca",
+					credential: "muazkh",
+					username: "webrtc@live.com",
+				},
+			],
+		};
+		const peerConnection = new RTCPeerConnection(configuration);
+		peerConnection.onicecandidate = (e) => {
+			console.log(source + " er candidate dhori....");
+			if (e.candidate) {
+				console.log(source + " er iceCandidate emit kori...");
+				socket.emit("call", {
+					type: "new-ice-candidate",
+					from: source,
+					iceCandidate: e.candidate,
+				});
+			}
+		};
+		peerConnection.ontrack = ({ streams: [stream] }) => {
+			console.log("streaming...");
+			displayRef.current.srcObject = stream;
+		};
+		peerConnection.onsignalingstatechange = () => {
+			console.log(peerConnection.signalingState);
+		};
+		peerConnection.onconnectionstatechange = (e) => {
+			if (peerConnection.connectionState === "connected") {
+				console.log("peers connected !!! ");
+			}
+		};
+		return peerConnection;
+	};
+
 	useEffect(() => {
+		//openMediaDevices();
+		//openDisplay();
+
 		console.log("heee");
 		!bool && loadAllMsgs();
 		//console.log(scrollRef.current.scrollTop);
@@ -80,6 +148,64 @@ function ChatBox(props) {
 			scrollRef.current.scrollTop =
 				scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
 		});
+
+		socket.on("otherUsers", (otherRemoteUsers) => {
+			console.log(otherRemoteUsers);
+			setRemoteUsers(otherRemoteUsers);
+			//var signalingChannel = new SignalingChannel(otherRemoteUser[0]);
+		});
+		socket.on("newUser", (newRemoteUser) => {
+			console.log(newRemoteUser);
+		});
+		socket.on("call", async (call) => {
+			if (call.answer) {
+				console.log("offer er answer pailam");
+				const remoteDesc = new RTCSessionDescription(call.answer);
+				await peer1Ref.current.setRemoteDescription(remoteDesc);
+			} else if (call.offer) {
+				console.log("offer er answer dicchi...");
+				peer2Ref.current = createPeer("callee");
+				const remoteDesc = new RTCSessionDescription(call.offer);
+				await peer2Ref.current.setRemoteDescription(remoteDesc);
+				const localStream = await openMediaDevices();
+				for (const track of localStream.getTracks()) {
+					peer2Ref.current.addTrack(track, localStream);
+				}
+				const answer = await peer2Ref.current.createAnswer();
+				await peer2Ref.current.setLocalDescription(answer);
+				socket.emit("call", { answer: answer });
+			}
+			if (call.iceCandidate) {
+				try {
+					//console.log("iceCandidate pailam.");
+					const candidate = new RTCIceCandidate(call.iceCandidate);
+					//console.log(peer2Ref.current.signalingState);
+					if (
+						call.from === "caller" &&
+						peer2Ref.current.signalingState === "stable" &&
+						peer2Ref.current.currentRemoteDescription !== null &&
+						peer2Ref.current.currentLocalDescription !== null
+					) {
+						console.log("caller er candidate pailam");
+						await peer2Ref.current.addIceCandidate(candidate);
+					} else if (
+						call.from === "callee" &&
+						peer1Ref.current.signalingState === "stable" &&
+						peer1Ref.current.currentRemoteDescription !== null &&
+						peer1Ref.current.currentLocalDescription !== null
+					) {
+						console.log("callee er candidate pailam");
+						await peer1Ref.current.addIceCandidate(candidate);
+					}
+				} catch (error) {
+					console.log(
+						"Error while receiving ice candidate : ",
+						error
+					);
+				}
+			}
+		});
+
 		!bool && setBool(true);
 		//return () => socket.disconnect();
 	}, []);
@@ -170,8 +296,27 @@ function ChatBox(props) {
 	const pickerHandler = (e) => {
 		setShowPicker(!showPicker);
 	};
+	const callHandler = async () => {
+		console.log("r k k ache dekhchi : ");
+		socket.emit("give_otherUsers");
+		peer1Ref.current = createPeer("caller");
+		const localStream = await openMediaDevices();
+		for (const track of localStream.getTracks()) {
+			peer1Ref.current.addTrack(track, localStream);
+		}
+		const offer = await peer1Ref.current.createOffer();
+		await peer1Ref.current.setLocalDescription(offer);
+		socket.emit("call", { offer: offer });
+	};
 	return (
 		<div className={styles.boxContainer}>
+			<video
+				ref={mediaRef}
+				id="localVideo"
+				autoplay
+				playsinline
+				controls="false"
+			/>
 			<Box className={styles.box}>
 				<Paper className={styles.formContainer} elevation={5}>
 					<Paper
@@ -227,7 +372,15 @@ function ChatBox(props) {
 						}}
 					/>
 				</Paper>
+				<button onClick={(e) => callHandler(e)}>Call</button>
 			</Box>
+			<video
+				ref={displayRef}
+				id="displayVideo"
+				autoplay
+				playsinline
+				controls="false"
+			/>
 		</div>
 	);
 }
