@@ -38,7 +38,7 @@ let messages = [
 	},
 ];
 
-const socket = io("http://localhost:4000");
+const socket = io("https://mimo-backend.herokuapp.com/");
 function ChatBox(props) {
 	const [msgs, setMsgs] = useState(messages);
 	const [myMsg, setMyMsg] = useState();
