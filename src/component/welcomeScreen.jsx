@@ -79,7 +79,7 @@ function WelcomeScreen(props) {
 					</div>
 				)}
 				<button type="submit" className="btn btn-danger">
-					Submit
+					login
 				</button>
 			</form>
 		</div>
