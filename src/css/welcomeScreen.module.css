@@ -1,0 +1,28 @@
+.boxContainer {
+	min-width: 100vw;
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #212121;
+}
+.formContainer {
+	padding: 10%;
+	background-color: #424242;
+	border-radius: 10px;
+	border: 1px solid;
+	border-color: #bf360c;
+	color: #f5f5f5;
+}
+.textArea {
+	background-color: #616161;
+	color: #eeeeee;
+}
+.textArea:hover {
+	background-color: #212121;
+	color: #eeeeee;
+}
+.textArea:focus {
+	background-color: #212121;
+	color: #eeeeee;
+}
