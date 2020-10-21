@@ -62,6 +62,8 @@ function WelcomeScreen(props) {
 						<option>Jui</option>
 						<option>Julia</option>
 						<option>Tanny</option>
+						<option>Kakima</option>
+						<option>Nazmul</option>
 					</select>
 				</div>
 				<div className="form-group">
