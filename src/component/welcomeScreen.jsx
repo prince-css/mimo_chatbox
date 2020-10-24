@@ -36,11 +36,15 @@ function WelcomeScreen(props) {
 			userObj["color"] = res.data[0].color;
 			// console.log(userObj);
 			fetchedData.userHandler(userObj);
-			props.history.replace("/chatbox");
+			console.log(res.statusMessage);
+			props.history.push("/chatbox");
 		} catch (error) {
-			// console.log(error);
-			//setError(error.response.data);
+			console.log(error.response.data);
+			setError(error.response.data);
 		}
+	};
+	const signupHandler = (e) => {
+		props.history.push("/signup");
 	};
 	return (
 		<div className={styles.boxContainer}>
@@ -48,23 +52,17 @@ function WelcomeScreen(props) {
 				className={styles.formContainer}
 				onSubmit={(e) => submitHandler(e)}
 			>
-				<img src={logo} />
+				<div>
+					<img src={logo} />
+				</div>
 				<div className="form-group">
-					<label for="username">Username</label>
-					<select
+					<label for="exampleInputPassword1">Username</label>
+					<input
+						type="text"
 						className={`form-control ${styles.textArea}`}
 						id="username"
 						onChange={(e) => usernameHandler(e)}
-					>
-						<option>--</option>
-						<option>Mim</option>
-						<option>Prince</option>
-						<option>Jui</option>
-						<option>Julia</option>
-						<option>Tanny</option>
-						<option>Kakima</option>
-						<option>Nazmul</option>
-					</select>
+					/>
 				</div>
 				<div className="form-group">
 					<label for="exampleInputPassword1">Password</label>
@@ -80,9 +78,29 @@ function WelcomeScreen(props) {
 						{error}
 					</div>
 				)}
-				<button type="submit" className="btn btn-danger">
-					login
-				</button>
+
+				<div className={`${styles.formButtonGroup}`}>
+					<button
+						type="submit"
+						className={`btn btn-danger ${styles.formButtonfull}`}
+					>
+						login
+					</button>
+				</div>
+				<br></br>
+				<div className={styles.bottomtext}>
+					<div>New to mimo?</div>
+					<div></div>
+					<button
+						type="submit"
+						className={`btn btn-danger ${styles.formButton}`}
+						onClick={(e) => {
+							signupHandler(e);
+						}}
+					>
+						Sign Up
+					</button>
+				</div>
 			</form>
 		</div>
 	);
