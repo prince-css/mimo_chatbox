@@ -7,7 +7,7 @@ export const getMsgs = async () => {
 	return res.data;
 };
 export const getUser = async (userObj) => {
-	const res = await axios.get(`${prodAPI}/user?${userObj}`);
+	const res = await axios.get(`${prodAPI}user?${userObj}`);
 	// console.log(res);
 	return res;
 };
